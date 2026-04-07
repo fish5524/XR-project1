@@ -232,6 +232,10 @@ public class OVRPlayerController : MonoBehaviour
 
     private bool playerControllerEnabled = false;
 
+    public float ForwardForce = 2.0f;
+    public float JumpCooldown = 1.0f;
+    private float lastJumpTime = -999f;
+
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
     private InputAction moveForwardAction;
@@ -335,7 +339,7 @@ public class OVRPlayerController : MonoBehaviour
                 return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Space)) Jump();
+        if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
 
         //todo: enable for Unity Input System
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -404,10 +408,12 @@ public class OVRPlayerController : MonoBehaviour
         moveDirection += MoveThrottle * SimulationRate * Time.deltaTime;
 
         // Gravity
+        float currentModifier = (FallSpeed <= 0) ? (GravityModifier *  0.01f) : GravityModifier;
+
         if (Controller.isGrounded && FallSpeed <= 0)
-            FallSpeed = ((Physics.gravity.y * (GravityModifier * 0.002f)));
+            FallSpeed = ((Physics.gravity.y * (currentModifier * 0.002f)));
         else
-            FallSpeed += ((Physics.gravity.y * (GravityModifier * 0.002f)) * SimulationRate * Time.deltaTime);
+            FallSpeed += ((Physics.gravity.y * (currentModifier * 0.002f)) * SimulationRate * Time.deltaTime);
 
         moveDirection.y += FallSpeed * SimulationRate * Time.deltaTime;
 
@@ -677,14 +683,30 @@ public class OVRPlayerController : MonoBehaviour
     //    return true;
     //}
 
-    public bool Jump()
+    public bool Jump_AND_Forward()
     {
+        if (Time.time < lastJumpTime + JumpCooldown)
+        {
+            Debug.Log("跳躍冷卻中...");
+            return false;
+        }
+
         if (!Controller.isGrounded && FallSpeed < -0.1f)
             return false;
 
-        MoveThrottle += new Vector3(0, JumpForce, 0);
+        Vector3 forwardDir = CameraRig.centerEyeAnchor.forward;
+        forwardDir.y = 0; // 消除 Y 軸分量，確保不會因為往上看就飛到天上去
+        forwardDir.Normalize();
 
+        // 4. 同時增加 向上 (JumpForce) 與 向前 (ForwardForce) 的推力
+        // MoveThrottle 通常是處理水平位移的，所以我們把力道加進去
+        MoveThrottle += new Vector3(0, JumpForce, 0) + (forwardDir * ForwardForce);
+
+        // 5. 重置下墜速度並更新冷卻時間
         FallSpeed = 0;
+        lastJumpTime = Time.time; // 更新最後跳躍時間
+
+        Debug.Log("【成功跳躍前衝】");
 
         return true;
     }
