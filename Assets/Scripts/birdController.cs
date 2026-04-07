@@ -339,6 +339,11 @@ public class OVRPlayerController : MonoBehaviour
                 return;
         }
 
+        if (OVRInput.GetDown(OVRInput.RawButton.A))
+        {
+            Jump_AND_Forward();
+        }
+
         if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
 
         //todo: enable for Unity Input System
@@ -408,7 +413,7 @@ public class OVRPlayerController : MonoBehaviour
         moveDirection += MoveThrottle * SimulationRate * Time.deltaTime;
 
         // Gravity
-        float currentModifier = (FallSpeed <= 0) ? (GravityModifier *  0.01f) : GravityModifier;
+        float currentModifier = (FallSpeed <= 0) ? (GravityModifier *  1.0f) : GravityModifier;
 
         if (Controller.isGrounded && FallSpeed <= 0)
             FallSpeed = ((Physics.gravity.y * (currentModifier * 0.002f)));
