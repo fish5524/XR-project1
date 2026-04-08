@@ -260,6 +260,8 @@ public class birdController : MonoBehaviour
     public float swingThreshold = 2f;    // 揮動速度門檻（單位：公尺/秒）
     public float swingCooldown = 1f;     // 兩次揮動間的冷卻時間，避免觸發過快
     private float lastSwingTime;
+    private float maxSpeedInCurrentSwing = 0f; // 記錄本次揮動中的最高速
+    private bool isTrackingSwing = false;      // 是否正在追蹤一次有效的揮動
 
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
@@ -381,7 +383,7 @@ public class birdController : MonoBehaviour
             
             if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
             // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
-            Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
+            // Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
             if (heightVelocity > jumpThreshold)
             {
                 Debug.Log("[Bird] 偵測到快速站起，觸發跳躍！");
@@ -402,17 +404,44 @@ public class birdController : MonoBehaviour
             float rightSwingSpeed = -rightVel.y;
 
             // 判斷是否超過門檻且冷卻時間已過
-            if (Time.time - lastSwingTime > swingCooldown)
+            float currentSpeed = Mathf.Max(leftSwingSpeed, rightSwingSpeed);
+
+            // 1. 開始追蹤：速度超過門檻，且目前還沒觸發過
+            if (currentSpeed > swingThreshold && !isTrackingSwing)
             {
-                if (leftSwingSpeed > swingThreshold || rightSwingSpeed > swingThreshold)
+                if (Time.time - lastSwingTime > swingCooldown)
                 {
-                    // 取得左右手較快的那一個速度傳進去
-                    float maxSwing = Mathf.Max(leftSwingSpeed, rightSwingSpeed);
-                    
-                    Fly(maxSwing); // 傳入速度進行計算
-                    
-                    lastSwingTime = Time.time; // 記得這行要在最後更新
+                    isTrackingSwing = true;
+                    maxSpeedInCurrentSwing = currentSpeed;
                 }
+            }
+
+            // 2. 追蹤中：更新峰值
+            if (isTrackingSwing)
+            {
+                if (currentSpeed >= maxSpeedInCurrentSwing)
+                {
+                    // 速度還在上升，更新目前看到的最高速
+                    maxSpeedInCurrentSwing = currentSpeed;
+                }
+                else
+                {
+                    // 關鍵點：速度開始下降了！代表剛才那一幀就是「峰值」
+                    TriggerPeakFly(maxSpeedInCurrentSwing);
+                    
+                    // 觸發後重置狀態，直到速度降下來
+                    isTrackingSwing = false;
+                    maxSpeedInCurrentSwing = 0f;
+                    lastSwingTime = Time.time;
+                }
+            }
+
+            // 3. 安全重置：如果速度降得很低，確保狀態是乾淨的
+            // 防止玩家手抖動導致 isTrackingSwing 沒被重置
+            if (currentSpeed < swingThreshold * 0.5f)
+            {
+                isTrackingSwing = false;
+                maxSpeedInCurrentSwing = 0f;
             }
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -850,6 +879,13 @@ public class birdController : MonoBehaviour
         return true;
     }
 
+    private void TriggerPeakFly(float peakSpeed)
+    {
+        // 使用剛才捕捉到的最高速度來飛行
+        Fly(peakSpeed);
+        Debug.Log($"[Peak Detection] 偵測到峰值速度: {peakSpeed:F2}，執行飛行！");
+    }
+
     public void Fly(float swingSpeed = 0f) // 傳入揮動速度，預設 0 是給按鍵用的
     {
         Rigidbody rb = GetComponent<Rigidbody>();
@@ -857,11 +893,11 @@ public class birdController : MonoBehaviour
 
         // 1. 計算力道倍率 (如果是按鍵觸發 swingSpeed 會是 0，則使用 1 倍力)
         // 如果是揮動，根據速度給予 1.0 ~ 1.5 倍的加成 (數值可自行調整)
-        float speedMultiplier = 0.5f;
+        float speedMultiplier = 1.0f;
         if (swingSpeed > swingThreshold)
         {
             // 映射：從 swingThreshold 到 maxSwingSpeed 映射成 1.0 到 1.5
-            speedMultiplier = Mathf.Lerp(1.0f, 1.5f, swingSpeed / 10f); 
+            speedMultiplier = Mathf.Lerp(0.5f, 0.8f, swingSpeed / 3.0f); 
         }
 
         // 2. 只有在垂直動力還沒超過上限時才增加
