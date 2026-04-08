@@ -70,6 +70,15 @@ public class GlobalSceneController : MonoBehaviour
         SwitchToNextScene();
     }
 
+    public void SetJumpGameMode(bool active)
+    {
+        var bird = ovrCameraRig.GetComponentInChildren<birdController>();
+        if (bird != null)
+        {
+            bird.isJumpGame = active;
+        }
+    }
+
     // --- 核心功能：自動換下一個場景 ---
     public void SwitchToNextScene()
     {
@@ -85,6 +94,14 @@ public class GlobalSceneController : MonoBehaviour
             SceneConfig nextConfig = sceneSequence[currentSequenceIndex];
             Debug.Log($"準備切換到下一個場景: {nextConfig.sceneName}");
             StartCoroutine(LoadSceneRoutine(nextConfig));
+            if (nextConfig.sceneName == "Forest1")
+            {
+                SetJumpGameMode(true);
+            }
+            else
+            {
+                SetJumpGameMode(false);
+            }
         }
         else
         {

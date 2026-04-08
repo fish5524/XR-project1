@@ -7392,9 +7392,11 @@ MonoBehaviour:
   EnableLinearMovement: 1
   EnableRotation: 1
   RotationEitherThumbstick: 0
-  HaltUpdateMovement: 0
-  ForwardForce: 0.2
+  isJumpGame: 0
+  ForwardForce: 0.5
   JumpCooldown: 0.6
+  jumpThreshold: 0.3
+  minHeightToTrigger: 1
 --- !u!54 &1416296609
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -207,6 +207,8 @@ public class birdController : MonoBehaviour
     /// </summary>
     public bool RotationEitherThumbstick = false;
 
+    public bool isJumpGame = false;
+
     protected CharacterController Controller = null;
     protected OVRCameraRig CameraRig = null;
 
@@ -221,7 +223,7 @@ public class birdController : MonoBehaviour
     // It is rare to want to use mouse movement in VR, so ignore the mouse by default.
     private bool SkipMouseRotation = true;
 
-    public bool HaltUpdateMovement = false;
+    private bool HaltUpdateMovement = false;
     private bool prevHatLeft = false;
     private bool prevHatRight = false;
     private float SimulationRate = 60f;
@@ -236,6 +238,11 @@ public class birdController : MonoBehaviour
     public float JumpCooldown = 1.0f;
     private float lastJumpTime = -999f;
     private float currentModifier;
+
+    [Header("身高觸發設定")]
+    public float jumpThreshold = 0.3f;    // 瞬間站起超過 30 公分就觸發
+    public float minHeightToTrigger = 1.0f; // 確保不是在地上爬的時候觸發
+    private float lastHeaderHeight;        // 記錄上一幀的高度
 
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
@@ -352,8 +359,16 @@ public class birdController : MonoBehaviour
         else 
         {
             // 只有非 Kinematic 狀態才偵測跳躍
-            if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
-            if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+            float currentHeight = CameraRig.centerEyeAnchor.localPosition.y;
+            float heightVelocity = currentHeight - lastHeaderHeight;
+            
+            // if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
+            // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+            if (isJumpGame && heightVelocity > jumpThreshold && currentHeight > minHeightToTrigger)
+            {
+                Debug.Log("[Bird] 偵測到快速站起，觸發跳躍！");
+                Jump_AND_Forward();
+            }
         }
 
         //todo: enable for Unity Input System
