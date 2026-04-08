@@ -246,8 +246,8 @@ public class birdController : MonoBehaviour
     private float lastHeaderHeight;        // 記錄上一幀的高度
 
     [Header("飛行設定")]
-    public float flapForce = 0.1f;    // 每次按空白鍵給予的向上推力
-    public float maxFlySpeed = 0.2f;  // 限制向上飛行的最高速度，防止衝太快
+    public float flapForce = 0.01f;    // 每次按空白鍵給予的向上推力
+    public float maxFlySpeed = 0.02f;  // 限制向上飛行的最高速度，防止衝太快
 
     [Header("動畫設定")]
     public Animator birdAnimator; 
@@ -257,7 +257,7 @@ public class birdController : MonoBehaviour
     public string flyingStateName = "AmazonMacaw_Rig:ParrotAnimated|Parrot_Flap";
 
     [Header("手把揮動設定")]
-    public float swingThreshold = 3.5f;    // 揮動速度門檻（單位：公尺/秒）
+    public float swingThreshold = 2f;    // 揮動速度門檻（單位：公尺/秒）
     public float swingCooldown = 1f;     // 兩次揮動間的冷卻時間，避免觸發過快
     private float lastSwingTime;
 
@@ -406,9 +406,12 @@ public class birdController : MonoBehaviour
             {
                 if (leftSwingSpeed > swingThreshold || rightSwingSpeed > swingThreshold)
                 {
-                    Fly(); // 呼叫你原本寫好的 Fly 函式（增加向上推力）                    
-                    // Debug 看一下揮動多快
-                    Debug.Log($"[Swing] 拍打成功！左手速度: {leftSwingSpeed:F2} | 右手速度: {rightSwingSpeed:F2} | {Time.time - lastSwingTime}");
+                    // 取得左右手較快的那一個速度傳進去
+                    float maxSwing = Mathf.Max(leftSwingSpeed, rightSwingSpeed);
+                    
+                    Fly(maxSwing); // 傳入速度進行計算
+                    
+                    lastSwingTime = Time.time; // 記得這行要在最後更新
                 }
             }
             if (Input.GetKeyDown(KeyCode.Space))
@@ -458,7 +461,8 @@ public class birdController : MonoBehaviour
             else
             {
                 // 落地停止
-                birdAnimator.speed = 0;
+                // birdAnimator.speed = 0;
+                birdAnimator.Play("AmazonMacaw_Rig:ParrotAnimated|Parrot_Idle");
             }
             // Debug.Log($"高度: {transform.position.y}");
         }
@@ -846,21 +850,33 @@ public class birdController : MonoBehaviour
         return true;
     }
 
-    public void Fly()
+    public void Fly(float swingSpeed = 0f) // 傳入揮動速度，預設 0 是給按鍵用的
     {
-        // 只有在遊戲模式且沒被物理鎖定時才能飛
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null && rb.isKinematic) return;
 
-        // 取得當前的向上速度 (MoveThrottle.y 代表當前的垂直動力)
-        // 只有在還沒超過最高飛行速度時，才允許繼續增加推力
+        // 1. 計算力道倍率 (如果是按鍵觸發 swingSpeed 會是 0，則使用 1 倍力)
+        // 如果是揮動，根據速度給予 1.0 ~ 1.5 倍的加成 (數值可自行調整)
+        float speedMultiplier = 0.5f;
+        if (swingSpeed > swingThreshold)
+        {
+            // 映射：從 swingThreshold 到 maxSwingSpeed 映射成 1.0 到 1.5
+            speedMultiplier = Mathf.Lerp(1.0f, 1.5f, swingSpeed / 10f); 
+        }
+
+        // 2. 只有在垂直動力還沒超過上限時才增加
         if (MoveThrottle.y < maxFlySpeed)
         {
-            // 向上注入推力
-            MoveThrottle += new Vector3(0, flapForce, 0);
+            // 注入推力 (乘上倍率)
+            MoveThrottle += new Vector3(0, flapForce * speedMultiplier, 0);
 
-            // UnityEngine.Debug.Log($"[Fly] 拍打翅膀！當前垂直動力: {MoveThrottle.y:F2}");
-            UnityEngine.Debug.Log($"目前高度 {this.transform.position.y}");
+            // 3. 強制限速 (防止 MoveThrottle 瞬間加到天文數字)
+            if (MoveThrottle.y > maxFlySpeed)
+            {
+                MoveThrottle = new Vector3(MoveThrottle.x, maxFlySpeed * speedMultiplier, MoveThrottle.z);
+            }
+
+            Debug.Log($"[Fly] 觸發力道: {flapForce * speedMultiplier:F2} | 當前動力: {MoveThrottle.y:F2}");
         }
     }
 
