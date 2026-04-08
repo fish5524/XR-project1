@@ -26,6 +26,7 @@ public class BirdAgent : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Animator animator;
+    [SerializeField] private AudioSource ambientCallAudioSource;
 
     [Header("Idle Behavior")]
     [SerializeField] private List<BirdAgent> sameTypeAgents = new List<BirdAgent>();
@@ -46,12 +47,23 @@ public class BirdAgent : MonoBehaviour
     public IdleAction CurrentIdleAction => currentIdleAction;
 
     private Coroutine idleRoutine;
+    private Coroutine ambientCallRoutine;
     private float takeOffEndTime;
     private bool isFlapLoopPlaying;
 
     private float idleClipLength = 1f;
     private float eatClipLength = 1f;
     private float hopClipLength = 0.5f;
+
+    private AudioClip ambientCallClip;
+    private bool ambientCallsEnabled;
+    private float ambientCallMinInterval = 4f;
+    private float ambientCallMaxInterval = 9f;
+    private float ambientCallVolume = 0.35f;
+    private float ambientCallMinPitch = 0.95f;
+    private float ambientCallMaxPitch = 1.05f;
+    private float ambientCallMinDistance = 2f;
+    private float ambientCallMaxDistance = 18f;
 
     private void Awake()
     {
@@ -65,6 +77,24 @@ public class BirdAgent : MonoBehaviour
     {
         CacheAnimationLengths();
         EnterIdleState();
+    }
+
+    private void OnEnable()
+    {
+        if (ambientCallsEnabled && ambientCallClip != null)
+        {
+            RestartAmbientCallLoop();
+        }
+    }
+
+    private void OnDisable()
+    {
+        StopAmbientCallLoop();
+
+        if (ambientCallAudioSource != null)
+        {
+            ambientCallAudioSource.Stop();
+        }
     }
 
     private void Update()
@@ -95,6 +125,46 @@ public class BirdAgent : MonoBehaviour
     public void Land()
     {
         EnterIdleState();
+    }
+
+    public void ConfigureAmbientCall(
+        AudioClip clip,
+        bool enabled,
+        float minInterval,
+        float maxInterval,
+        float volume,
+        float minPitch,
+        float maxPitch,
+        float minDistance,
+        float maxDistance)
+    {
+        ambientCallClip = clip;
+        ambientCallsEnabled = enabled;
+        ambientCallMinInterval = Mathf.Max(0.1f, minInterval);
+        ambientCallMaxInterval = Mathf.Max(ambientCallMinInterval, maxInterval);
+        ambientCallVolume = Mathf.Clamp01(volume);
+        ambientCallMinPitch = Mathf.Max(0.1f, minPitch);
+        ambientCallMaxPitch = Mathf.Max(ambientCallMinPitch, maxPitch);
+        ambientCallMinDistance = Mathf.Max(0.1f, minDistance);
+        ambientCallMaxDistance = Mathf.Max(ambientCallMinDistance, maxDistance);
+
+        if (!ambientCallsEnabled || ambientCallClip == null)
+        {
+            StopAmbientCallLoop();
+
+            if (ambientCallAudioSource != null)
+            {
+                ambientCallAudioSource.Stop();
+                ambientCallAudioSource.enabled = false;
+            }
+
+            return;
+        }
+
+        EnsureAmbientCallAudioSource();
+        ConfigureAmbientCallAudioSource();
+        ambientCallAudioSource.enabled = true;
+        RestartAmbientCallLoop();
     }
 
     private void EnterIdleState()
@@ -281,5 +351,68 @@ public class BirdAgent : MonoBehaviour
 
         animator.CrossFadeInFixedTime(stateName, 0.1f);
         animator.speed = 1f;
+    }
+
+    private void EnsureAmbientCallAudioSource()
+    {
+        if (ambientCallAudioSource == null)
+        {
+            ambientCallAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+    }
+
+    private void ConfigureAmbientCallAudioSource()
+    {
+        ambientCallAudioSource.playOnAwake = false;
+        ambientCallAudioSource.loop = false;
+        ambientCallAudioSource.clip = ambientCallClip;
+        ambientCallAudioSource.spatialBlend = 1f;
+        ambientCallAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        ambientCallAudioSource.minDistance = ambientCallMinDistance;
+        ambientCallAudioSource.maxDistance = ambientCallMaxDistance;
+        ambientCallAudioSource.dopplerLevel = 0f;
+        ambientCallAudioSource.priority = 64;
+        ambientCallAudioSource.spread = 0f;
+        ambientCallAudioSource.volume = 1f;
+    }
+
+    private void RestartAmbientCallLoop()
+    {
+        StopAmbientCallLoop();
+
+        if (isActiveAndEnabled)
+        {
+            ambientCallRoutine = StartCoroutine(AmbientCallLoop());
+        }
+    }
+
+    private void StopAmbientCallLoop()
+    {
+        if (ambientCallRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(ambientCallRoutine);
+        ambientCallRoutine = null;
+    }
+
+    private IEnumerator AmbientCallLoop()
+    {
+        float initialDelay = Random.Range(0.05f, Mathf.Max(0.05f, ambientCallMaxInterval));
+        yield return new WaitForSeconds(initialDelay);
+
+        while (ambientCallsEnabled && ambientCallClip != null)
+        {
+            if (ambientCallAudioSource != null && !ambientCallAudioSource.isPlaying)
+            {
+                ambientCallAudioSource.pitch = Random.Range(ambientCallMinPitch, ambientCallMaxPitch);
+                ambientCallAudioSource.PlayOneShot(ambientCallClip, ambientCallVolume);
+            }
+
+            yield return new WaitForSeconds(Random.Range(ambientCallMinInterval, ambientCallMaxInterval));
+        }
+
+        ambientCallRoutine = null;
     }
 }
