@@ -240,8 +240,8 @@ public class birdController : MonoBehaviour
     private float currentModifier;
 
     [Header("身高觸發設定")]
-    public float jumpThreshold = 0.3f;    // 瞬間站起超過 30 公分就觸發
-    public float minHeightToTrigger = 1.0f; // 確保不是在地上爬的時候觸發
+    private float jumpThreshold = 0.01f;    // 瞬間站起超過 30 公分就觸發
+    private float minHeightToTrigger = 0.5f; // 確保不是在地上爬的時候觸發
     private float lastHeaderHeight;        // 記錄上一幀的高度
 
     // Input Actions for new input system
@@ -362,13 +362,18 @@ public class birdController : MonoBehaviour
             float currentHeight = CameraRig.centerEyeAnchor.localPosition.y;
             float heightVelocity = currentHeight - lastHeaderHeight;
             
-            // if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
+            if (isJumpGame && OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
             // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
-            if (isJumpGame && heightVelocity > jumpThreshold && currentHeight > minHeightToTrigger)
+            if (isJumpGame)
+            {
+                Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
+            }
+            if (isJumpGame && heightVelocity > jumpThreshold)
             {
                 Debug.Log("[Bird] 偵測到快速站起，觸發跳躍！");
                 Jump_AND_Forward();
             }
+            lastHeaderHeight = currentHeight;
         }
 
         //todo: enable for Unity Input System

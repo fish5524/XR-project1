@@ -2618,18 +2618,18 @@ MonoBehaviour:
   sceneSequence:
   - sceneName: HatchAnimation
     isBirdActive: 0
-    useFloorLevel: 1
-    cameraPos: {x: 0, y: 0, z: -4.09}
+    useFloorLevel: 0
+    cameraPos: {x: 0, y: 3, z: -3}
     cameraRot: {x: 0, y: 0, z: 0}
   - sceneName: Forest1
     isBirdActive: 1
     useFloorLevel: 0
-    cameraPos: {x: 0, y: 2, z: 0}
+    cameraPos: {x: 0, y: 0.6, z: 0}
     cameraRot: {x: 0, y: 0, z: 0}
   - sceneName: AfterEating
     isBirdActive: 0
-    useFloorLevel: 1
-    cameraPos: {x: 0, y: 0, z: -4.09}
+    useFloorLevel: 0
+    cameraPos: {x: 0, y: 2, z: 0}
     cameraRot: {x: 0, y: 0, z: 0}
   - sceneName: Forest3
     isBirdActive: 0
@@ -7379,7 +7379,7 @@ MonoBehaviour:
   Acceleration: 0.1
   Damping: 0.3
   BackAndSideDampen: 0.4
-  JumpForce: 0.3
+  JumpForce: 0.2
   RotationAmount: 1.5
   RotationRatchet: 10
   SnapRotation: 1
@@ -7390,7 +7390,7 @@ MonoBehaviour:
   GravityModifier: 0.3
   useProfileData: 0
   EnableLinearMovement: 1
-  EnableRotation: 1
+  EnableRotation: 0
   RotationEitherThumbstick: 0
   isJumpGame: 0
   ForwardForce: 0.5
