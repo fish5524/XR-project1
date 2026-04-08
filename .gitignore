@@ -62,3 +62,11 @@ crashlytics-build.properties
 
 # OS related
 .DS_Store
+
+*.slnx
+
+# Unity 恢復資料夾
+/[Aa]ssets/[Rr]ecovery/
+/[Aa]ssets/_Recovery/
+
+TempAssembly.dll
