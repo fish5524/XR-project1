@@ -32,6 +32,8 @@ public class GameCore : MonoBehaviour
 
     private void Start()
     {
+        OnStoryStarted += (index) => GlobalSceneController.instance.SwitchToNextScene();
+        OnInteractionRequested += (index) => GlobalSceneController.instance.SwitchToNextScene();
         if (autoStartOnPlay)
         {
             StartFlow();

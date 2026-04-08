@@ -34,7 +34,7 @@ using UnityEngine.InputSystem;
 /// </remarks>
 [RequireComponent(typeof(CharacterController))]
 [HelpURL("https://developer.oculus.com/documentation/unity/unity-sf-distancegrab/")]
-public class OVRPlayerController : MonoBehaviour
+public class birdController : MonoBehaviour
 {
     /// <summary>
     /// Controls the rate of acceleration during continuous movement (as opposed to teleportation).
@@ -207,6 +207,8 @@ public class OVRPlayerController : MonoBehaviour
     /// </summary>
     public bool RotationEitherThumbstick = false;
 
+    public bool isJumpGame = false;
+
     protected CharacterController Controller = null;
     protected OVRCameraRig CameraRig = null;
 
@@ -235,6 +237,12 @@ public class OVRPlayerController : MonoBehaviour
     public float ForwardForce = 2.0f;
     public float JumpCooldown = 1.0f;
     private float lastJumpTime = -999f;
+    private float currentModifier;
+
+    [Header("身高觸發設定")]
+    private float jumpThreshold = 0.01f;    // 瞬間站起超過 30 公分就觸發
+    private float minHeightToTrigger = 0.5f; // 確保不是在地上爬的時候觸發
+    private float lastHeaderHeight;        // 記錄上一幀的高度
 
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
@@ -339,12 +347,34 @@ public class OVRPlayerController : MonoBehaviour
                 return;
         }
 
-        if (OVRInput.GetDown(OVRInput.RawButton.A))
-        {
-            Jump_AND_Forward();
-        }
+        // 如果角色控制器存在且处于 kinematic 模式，则跳过输入处理
+        Rigidbody rb = GetComponent<Rigidbody>(); 
+        if (rb == null) rb = GetComponentInParent<Rigidbody>();
 
-        if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+        if (rb == null || rb.isKinematic) 
+        {
+            // 雖然不給跳，但這裡不要 return！
+            // 讓 Update 繼續跑下去，確保 OVR 內部的運算維持活絡
+        }
+        else 
+        {
+            // 只有非 Kinematic 狀態才偵測跳躍
+            float currentHeight = CameraRig.centerEyeAnchor.localPosition.y;
+            float heightVelocity = currentHeight - lastHeaderHeight;
+            
+            if (isJumpGame && OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
+            // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+            if (isJumpGame)
+            {
+                Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
+            }
+            if (isJumpGame && heightVelocity > jumpThreshold)
+            {
+                Debug.Log("[Bird] 偵測到快速站起，觸發跳躍！");
+                Jump_AND_Forward();
+            }
+            lastHeaderHeight = currentHeight;
+        }
 
         //todo: enable for Unity Input System
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -413,7 +443,17 @@ public class OVRPlayerController : MonoBehaviour
         moveDirection += MoveThrottle * SimulationRate * Time.deltaTime;
 
         // Gravity
-        float currentModifier = (FallSpeed <= 0) ? (GravityModifier *  1.0f) : GravityModifier;
+        Rigidbody rb = GetComponent<Rigidbody>(); 
+        if (rb == null) rb = GetComponentInParent<Rigidbody>();
+
+        if (rb == null || rb.isKinematic)
+        {
+            currentModifier = 0;
+        }
+        else
+        {
+            currentModifier = (FallSpeed <= 0) ? (GravityModifier *  1.0f) : GravityModifier;
+        }
 
         if (Controller.isGrounded && FallSpeed <= 0)
             FallSpeed = ((Physics.gravity.y * (currentModifier * 0.002f)));

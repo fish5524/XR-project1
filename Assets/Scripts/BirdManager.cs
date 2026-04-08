@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Diagnostics;
 
 public class BirdManager : MonoBehaviour
 {
@@ -44,12 +45,12 @@ public class BirdManager : MonoBehaviour
 
         if (birds.Count == 0)
         {
-            Debug.LogWarning("BirdManager: No birds found under birdsRoot.");
+            UnityEngine.Debug.LogWarning("BirdManager: No birds found under birdsRoot.");
         }
 
         if (waypoints.Count == 0)
         {
-            Debug.LogWarning("BirdManager: No waypoint found under trajectoryRoot.");
+            UnityEngine.Debug.LogWarning("BirdManager: No waypoint found under trajectoryRoot.");
         }
     }
 
@@ -114,7 +115,7 @@ public class BirdManager : MonoBehaviour
             BirdAgent agent = t.GetComponent<BirdAgent>();
             if (agent == null)
             {
-                agent = t.gameObject.AddComponent<BirdAgent>();
+                continue;
             }
 
             birds.Add(agent);
@@ -138,6 +139,12 @@ public class BirdManager : MonoBehaviour
         {
             waypoints.Add(trajectoryRoot.GetChild(i));
         }
+    }
+
+    public void SetTrajectoryRoot(Transform newTrajectoryRoot)
+    {
+        trajectoryRoot = newTrajectoryRoot;
+        RebuildWaypointList();
     }
 
     [ContextMenu("Start Flock")]
