@@ -2,15 +2,33 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.Diagnostics;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class BirdManager : MonoBehaviour
 {
+#if UNITY_EDITOR
+    private const string DefaultAmbientCallClipPath = "Assets/Sound/bird.wav";
+#endif
+
     [Header("Scene References")]
     [SerializeField] private Transform birdsRoot;
     [SerializeField] private Transform trajectoryRoot;
 
     [Header("Playback")]
     [SerializeField] private bool playOnStart = false;
+
+    [Header("Ambient Calls")]
+    [SerializeField] private AudioClip ambientCallClip;
+    [SerializeField] private bool ambientCallsEnabled = true;
+    [SerializeField] private float ambientCallMinInterval = 4f;
+    [SerializeField] private float ambientCallMaxInterval = 9f;
+    [SerializeField, Range(0f, 1f)] private float ambientCallVolume = 0.35f;
+    [SerializeField] private float ambientCallMinPitch = 0.95f;
+    [SerializeField] private float ambientCallMaxPitch = 1.05f;
+    [SerializeField] private float ambientCallMinDistance = 2f;
+    [SerializeField] private float ambientCallMaxDistance = 18f;
 
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 4f;
@@ -40,6 +58,7 @@ public class BirdManager : MonoBehaviour
     {
         RebuildBirdList();
         RebuildWaypointList();
+        ApplyAmbientCallSettings();
         IsRunning = playOnStart;
         destinationReachedThisRun = false;
 
@@ -121,6 +140,8 @@ public class BirdManager : MonoBehaviour
             birds.Add(agent);
             noiseSeeds.Add(new Vector3(UnityEngine.Random.value * 10f, UnityEngine.Random.value * 10f, UnityEngine.Random.value * 10f));
         }
+
+        ApplyAmbientCallSettings();
     }
 
     [ContextMenu("Rebuild Waypoint List")]
@@ -292,4 +313,74 @@ public class BirdManager : MonoBehaviour
 
         return separation.normalized;
     }
+
+    private void OnValidate()
+    {
+        moveSpeed = Mathf.Max(0f, moveSpeed);
+        turnSpeed = Mathf.Max(0f, turnSpeed);
+        waypointReachDistance = Mathf.Max(0.01f, waypointReachDistance);
+        randomDirectionWeight = Mathf.Max(0f, randomDirectionWeight);
+        randomDirectionFrequency = Mathf.Max(0f, randomDirectionFrequency);
+        separationRadius = Mathf.Max(0.01f, separationRadius);
+        separationWeight = Mathf.Max(0f, separationWeight);
+
+        ambientCallMinInterval = Mathf.Max(0.1f, ambientCallMinInterval);
+        ambientCallMaxInterval = Mathf.Max(ambientCallMinInterval, ambientCallMaxInterval);
+        ambientCallVolume = Mathf.Clamp01(ambientCallVolume);
+        ambientCallMinPitch = Mathf.Max(0.1f, ambientCallMinPitch);
+        ambientCallMaxPitch = Mathf.Max(ambientCallMinPitch, ambientCallMaxPitch);
+        ambientCallMinDistance = Mathf.Max(0.1f, ambientCallMinDistance);
+        ambientCallMaxDistance = Mathf.Max(ambientCallMinDistance, ambientCallMaxDistance);
+
+#if UNITY_EDITOR
+        TryAssignDefaultAmbientCallClip();
+#endif
+
+        ApplyAmbientCallSettings();
+    }
+
+    private void ApplyAmbientCallSettings()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        for (int i = 0; i < birds.Count; i++)
+        {
+            BirdAgent bird = birds[i];
+            if (bird == null)
+            {
+                continue;
+            }
+
+            bird.ConfigureAmbientCall(
+                ambientCallClip,
+                ambientCallsEnabled,
+                ambientCallMinInterval,
+                ambientCallMaxInterval,
+                ambientCallVolume,
+                ambientCallMinPitch,
+                ambientCallMaxPitch,
+                ambientCallMinDistance,
+                ambientCallMaxDistance);
+        }
+    }
+
+#if UNITY_EDITOR
+    private void Reset()
+    {
+        TryAssignDefaultAmbientCallClip();
+    }
+
+    private void TryAssignDefaultAmbientCallClip()
+    {
+        if (ambientCallClip != null)
+        {
+            return;
+        }
+
+        ambientCallClip = AssetDatabase.LoadAssetAtPath<AudioClip>(DefaultAmbientCallClipPath);
+    }
+#endif
 }
