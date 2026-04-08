@@ -68,3 +68,5 @@ crashlytics-build.properties
 # Unity 恢復資料夾
 /[Aa]ssets/[Rr]ecovery/
 /[Aa]ssets/_Recovery/
+
+TempAssembly.dll
