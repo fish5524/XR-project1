@@ -239,8 +239,11 @@ public class GlobalSceneController : MonoBehaviour
                 // birdCtrl.HaltUpdateMovement = !config.isBirdActive;
             }
 
-            if (playerBird != null) playerBird.SetActive(config.isBirdActive);
-
+            if (playerBird != null)
+            {
+                playerBird.SetActive(config.isBirdActive);
+                if (config.sceneName == "Forest1") playerBird.SetActive(false);
+            }
             Debug.Log($"[Scene] {config.sceneName} 套用成功！模式: {(config.useFloorLevel ? "Floor" : "Eye")}");
         }
     }

@@ -208,6 +208,7 @@ public class birdController : MonoBehaviour
     public bool RotationEitherThumbstick = false;
 
     public bool isJumpGame = false;
+    public bool isFlyGame = false;
 
     protected CharacterController Controller = null;
     protected OVRCameraRig CameraRig = null;
@@ -240,9 +241,25 @@ public class birdController : MonoBehaviour
     private float currentModifier;
 
     [Header("身高觸發設定")]
-    private float jumpThreshold = 0.01f;    // 瞬間站起超過 30 公分就觸發
-    private float minHeightToTrigger = 0.5f; // 確保不是在地上爬的時候觸發
+    public float jumpThreshold = 0.01f;    // 瞬間站起超過 30 公分就觸發
+    public float minHeightToTrigger = 0.5f; // 確保不是在地上爬的時候觸發
     private float lastHeaderHeight;        // 記錄上一幀的高度
+
+    [Header("飛行設定")]
+    public float flapForce = 0.1f;    // 每次按空白鍵給予的向上推力
+    public float maxFlySpeed = 0.2f;  // 限制向上飛行的最高速度，防止衝太快
+
+    [Header("動畫設定")]
+    public Animator birdAnimator; 
+    public float minAnimSpeed = 0.5f; // 最慢拍動速度
+    public float maxAnimSpeed = 2.5f; // 最快拍動速度
+    [Header("動畫狀態名稱")]
+    public string flyingStateName = "AmazonMacaw_Rig:ParrotAnimated|Parrot_Flap";
+
+    [Header("手把揮動設定")]
+    public float swingThreshold = 3.5f;    // 揮動速度門檻（單位：公尺/秒）
+    public float swingCooldown = 1f;     // 兩次揮動間的冷卻時間，避免觸發過快
+    private float lastSwingTime;
 
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
@@ -356,26 +373,95 @@ public class birdController : MonoBehaviour
             // 雖然不給跳，但這裡不要 return！
             // 讓 Update 繼續跑下去，確保 OVR 內部的運算維持活絡
         }
-        else 
+        else if (isJumpGame)
         {
             // 只有非 Kinematic 狀態才偵測跳躍
             float currentHeight = CameraRig.centerEyeAnchor.localPosition.y;
             float heightVelocity = currentHeight - lastHeaderHeight;
             
-            if (isJumpGame && OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
+            if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
             // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
-            if (isJumpGame)
-            {
-                Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
-            }
-            if (isJumpGame && heightVelocity > jumpThreshold)
+            Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
+            if (heightVelocity > jumpThreshold)
             {
                 Debug.Log("[Bird] 偵測到快速站起，觸發跳躍！");
                 Jump_AND_Forward();
             }
             lastHeaderHeight = currentHeight;
         }
+        else if (isFlyGame)
+        {
+            // --- 1. 偵測手把揮動 ---
+            // 取得左右手把的世界座標速度
+            Vector3 leftVel = OVRInput.GetLocalControllerVelocity(OVRInput.Controller.LTouch);
+            Vector3 rightVel = OVRInput.GetLocalControllerVelocity(OVRInput.Controller.RTouch);
 
+            // 我們主要看垂直方向的速度（向下揮，所以 y 是負值）
+            // 使用 -y 來讓它變成正數方便比較
+            float leftSwingSpeed = -leftVel.y;
+            float rightSwingSpeed = -rightVel.y;
+
+            // 判斷是否超過門檻且冷卻時間已過
+            if (Time.time - lastSwingTime > swingCooldown)
+            {
+                if (leftSwingSpeed > swingThreshold || rightSwingSpeed > swingThreshold)
+                {
+                    Fly(); // 呼叫你原本寫好的 Fly 函式（增加向上推力）                    
+                    // Debug 看一下揮動多快
+                    Debug.Log($"[Swing] 拍打成功！左手速度: {leftSwingSpeed:F2} | 右手速度: {rightSwingSpeed:F2} | {Time.time - lastSwingTime}");
+                }
+            }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                Fly();
+            }
+            if (OVRInput.GetDown(OVRInput.RawButton.B))
+            {
+                Fly();
+            }
+        }
+        if (isFlyGame && birdAnimator != null)
+        {
+            // 1. 取得當前速度並計算動畫倍率
+            float currentSpeed = MoveThrottle.magnitude;
+            // 這裡確保即使速度很慢，翅膀也會以 minAnimSpeed 緩慢拍動
+            float animSpeed = Mathf.Lerp(minAnimSpeed, maxAnimSpeed, currentSpeed / maxFlySpeed);
+
+            // 2. 判定是否在空中 (離地)
+            // 使用 Controller.isGrounded 或是高度門檻來判定
+            bool isAirborne = !Controller.isGrounded || transform.position.y > 0.9f;
+
+            if (isAirborne)
+            {
+                birdAnimator.speed = animSpeed;
+
+                // 3. 取得目前第一層 (Layer 0) 的動畫狀態資訊
+                AnimatorStateInfo stateInfo = birdAnimator.GetCurrentAnimatorStateInfo(0);
+
+                // 4. 【核心邏輯】檢查是否正在播放指定動畫
+                if (stateInfo.IsName(flyingStateName))
+                {
+                    // 如果播放進度超過 99% (0.99f)，強制重頭播放
+                    // normalizedTime 會隨循環累加，所以用 % 1 取小數部分
+                    if (stateInfo.normalizedTime % 1f >= 0.99f)
+                    {
+                        // Play 參數：(動畫名, 層級, 開始時間點)
+                        birdAnimator.Play(flyingStateName, 0, 0f);
+                    }
+                }
+                else
+                {
+                    // 如果目前不是在播飛行動畫，就切換過去
+                    birdAnimator.Play(flyingStateName);
+                }
+            }
+            else
+            {
+                // 落地停止
+                birdAnimator.speed = 0;
+            }
+            // Debug.Log($"高度: {transform.position.y}");
+        }
         //todo: enable for Unity Input System
 #if ENABLE_LEGACY_INPUT_MANAGER
 
@@ -449,6 +535,10 @@ public class birdController : MonoBehaviour
         if (rb == null || rb.isKinematic)
         {
             currentModifier = 0;
+        }
+        else if (isFlyGame)
+        {
+            currentModifier = (FallSpeed <= 0) ? (GravityModifier *  0.002f) : GravityModifier;
         }
         else
         {
@@ -754,6 +844,24 @@ public class birdController : MonoBehaviour
         Debug.Log("【成功跳躍前衝】");
 
         return true;
+    }
+
+    public void Fly()
+    {
+        // 只有在遊戲模式且沒被物理鎖定時才能飛
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null && rb.isKinematic) return;
+
+        // 取得當前的向上速度 (MoveThrottle.y 代表當前的垂直動力)
+        // 只有在還沒超過最高飛行速度時，才允許繼續增加推力
+        if (MoveThrottle.y < maxFlySpeed)
+        {
+            // 向上注入推力
+            MoveThrottle += new Vector3(0, flapForce, 0);
+
+            // UnityEngine.Debug.Log($"[Fly] 拍打翅膀！當前垂直動力: {MoveThrottle.y:F2}");
+            UnityEngine.Debug.Log($"目前高度 {this.transform.position.y}");
+        }
     }
 
     /// <summary>

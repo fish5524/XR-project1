@@ -8,7 +8,7 @@ public class ScoreManager : MonoBehaviour
 
     public int score = 0;
     public TextMeshProUGUI scoreText; // 拖入你的 UI 文字物件
-    public const int TargetScore = 5;
+    public const int TargetScore = 1;
     private bool hasNotifiedCore = false;
 
     void Awake()

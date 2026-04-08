@@ -2630,7 +2630,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlobalSceneController
   ovrCameraRig: {fileID: 1416296600}
-  playerBird: {fileID: 2120627576}
+  playerBird: {fileID: 2092088892}
   fadeCanvasGroup: {fileID: 614894185}
   fadeDuration: 1.5
   sceneSequence:
@@ -2648,6 +2648,11 @@ MonoBehaviour:
     isBirdActive: 0
     useFloorLevel: 0
     cameraPos: {x: 0, y: 2, z: 0}
+    cameraRot: {x: 0, y: 0, z: 0}
+  - sceneName: Fly
+    isBirdActive: 1
+    useFloorLevel: 0
+    cameraPos: {x: 0, y: 1.1, z: 0}
     cameraRot: {x: 0, y: 0, z: 0}
   - sceneName: Forest3
     isBirdActive: 0
@@ -2877,6 +2882,83 @@ Transform:
   m_Children: []
   m_Father: {fileID: 234865442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &547682608
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1416296605}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      propertyPath: m_Name
+      value: ParrotAnimatedGreen
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2092088893}
+  m_SourcePrefab: {fileID: 100100000, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+--- !u!4 &547682609 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+  m_PrefabInstance: {fileID: 547682608}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &551583081
 GameObject:
   m_ObjectHideFlags: 0
@@ -7349,11 +7431,11 @@ Transform:
   m_GameObject: {fileID: 1416296600}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 42.76217, y: 197.2553, z: -13.64193}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2120627577}
+  - {fileID: 547682609}
   - {fileID: 1347794820}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -7411,10 +7493,19 @@ MonoBehaviour:
   EnableRotation: 0
   RotationEitherThumbstick: 0
   isJumpGame: 0
+  isFlyGame: 0
   ForwardForce: 0.5
   JumpCooldown: 0.6
-  jumpThreshold: 0.3
-  minHeightToTrigger: 1
+  jumpThreshold: 0.01
+  minHeightToTrigger: 0.5
+  flapForce: 0.1
+  maxFlySpeed: 0.5
+  birdAnimator: {fileID: 2092088893}
+  minAnimSpeed: 0.5
+  maxAnimSpeed: 2.5
+  flyingStateName: AmazonMacaw_Rig:ParrotAnimated|Parrot_Flap
+  swingThreshold: 1.2
+  swingCooldown: 0.01
 --- !u!54 &1416296609
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -9147,81 +9238,6 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.03454852, y: 0.0005114786, z: 0.00007304177}
     m_Extent: {x: 0.0009967163, y: 0.0020704702, z: 0.004453361}
   m_DirtyAABB: 0
---- !u!1001 &1656414841
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1416296605}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      propertyPath: m_Name
-      value: ParrotAnimatedGreen
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2120627579}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2120627578}
-  m_SourcePrefab: {fileID: 100100000, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
 --- !u!1 &1711522351
 GameObject:
   m_ObjectHideFlags: 0
@@ -11211,6 +11227,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 840344968}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2092088892 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
+  m_PrefabInstance: {fileID: 547682608}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2092088893
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092088892}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 96b51cd1e4ef2477fbb28f467fa571bf, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2113083396
 GameObject:
   m_ObjectHideFlags: 0
@@ -11347,53 +11390,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 504432329}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2120627576 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-  m_PrefabInstance: {fileID: 1656414841}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &2120627577 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 64c33828daf1c4a50b6c44834d9127b7, type: 3}
-  m_PrefabInstance: {fileID: 1656414841}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &2120627578
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2120627576}
-  m_Enabled: 0
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 96b51cd1e4ef2477fbb28f467fa571bf, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2120627579
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2120627576}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccddfc92dcebcd6498efe8c8add6fb0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ParrotAnimation
-  animator: {fileID: 2120627578}
-  animationSpeed: 3
-  jumpThreshold: 0.1
 --- !u!1 &2122585458
 GameObject:
   m_ObjectHideFlags: 0
