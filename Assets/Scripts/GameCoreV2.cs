@@ -6,7 +6,7 @@ public class GameCoreV2 : MonoBehaviour
 
     [Header("自動化設定")]
     [Tooltip("勾選後，一執行遊戲就會自動跳過開始畫面進入第一個場景")]
-    public bool autoStartOnPlay = true;
+    public bool autoStartOnPlay = false;
 
     private bool hasStarted = false; // 防止重複啟動
 

@@ -382,7 +382,7 @@ public class birdController : MonoBehaviour
             float heightVelocity = currentHeight - lastHeaderHeight;
             
             if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
-            // if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+            if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
             // Debug.Log($"[JumpDebug] 遊戲狀態:{isJumpGame} | 速度:{heightVelocity:F2} | 當前高度:{currentHeight:F2} | 觸發:{(isJumpGame && heightVelocity > jumpThreshold)}");
             if (heightVelocity > jumpThreshold)
             {

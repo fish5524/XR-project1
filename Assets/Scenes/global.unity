@@ -2616,6 +2616,11 @@ MonoBehaviour:
   fadeCanvasGroup: {fileID: 614894185}
   fadeDuration: 1.5
   sceneSequence:
+  - sceneName: Forest3
+    isBirdActive: 0
+    useFloorLevel: 0
+    cameraPos: {x: 41.98, y: 199.759, z: -20.611}
+    cameraRot: {x: 0, y: 0, z: 0}
   - sceneName: HatchAnimation
     isBirdActive: 0
     useFloorLevel: 0
@@ -2635,11 +2640,6 @@ MonoBehaviour:
     isBirdActive: 1
     useFloorLevel: 0
     cameraPos: {x: 0, y: 1.1, z: 0}
-    cameraRot: {x: 0, y: 0, z: 0}
-  - sceneName: Forest3
-    isBirdActive: 0
-    useFloorLevel: 0
-    cameraPos: {x: 42.76217, y: 197.2553, z: -13.64193}
     cameraRot: {x: 0, y: 0, z: 0}
 --- !u!1 &511493895
 GameObject:
