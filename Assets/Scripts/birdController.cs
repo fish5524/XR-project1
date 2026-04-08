@@ -34,7 +34,7 @@ using UnityEngine.InputSystem;
 /// </remarks>
 [RequireComponent(typeof(CharacterController))]
 [HelpURL("https://developer.oculus.com/documentation/unity/unity-sf-distancegrab/")]
-public class OVRPlayerController : MonoBehaviour
+public class birdController : MonoBehaviour
 {
     /// <summary>
     /// Controls the rate of acceleration during continuous movement (as opposed to teleportation).
@@ -221,7 +221,7 @@ public class OVRPlayerController : MonoBehaviour
     // It is rare to want to use mouse movement in VR, so ignore the mouse by default.
     private bool SkipMouseRotation = true;
 
-    private bool HaltUpdateMovement = false;
+    public bool HaltUpdateMovement = false;
     private bool prevHatLeft = false;
     private bool prevHatRight = false;
     private float SimulationRate = 60f;
@@ -235,6 +235,7 @@ public class OVRPlayerController : MonoBehaviour
     public float ForwardForce = 2.0f;
     public float JumpCooldown = 1.0f;
     private float lastJumpTime = -999f;
+    private float currentModifier;
 
     // Input Actions for new input system
 #if ENABLE_INPUT_SYSTEM && UNITY_NEW_INPUT_SYSTEM_INSTALLED
@@ -339,12 +340,21 @@ public class OVRPlayerController : MonoBehaviour
                 return;
         }
 
-        if (OVRInput.GetDown(OVRInput.RawButton.A))
-        {
-            Jump_AND_Forward();
-        }
+        // 如果角色控制器存在且处于 kinematic 模式，则跳过输入处理
+        Rigidbody rb = GetComponent<Rigidbody>(); 
+        if (rb == null) rb = GetComponentInParent<Rigidbody>();
 
-        if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+        if (rb == null || rb.isKinematic) 
+        {
+            // 雖然不給跳，但這裡不要 return！
+            // 讓 Update 繼續跑下去，確保 OVR 內部的運算維持活絡
+        }
+        else 
+        {
+            // 只有非 Kinematic 狀態才偵測跳躍
+            if (OVRInput.GetDown(OVRInput.RawButton.A)) Jump_AND_Forward();
+            if (Input.GetKeyDown(KeyCode.Space)) Jump_AND_Forward();
+        }
 
         //todo: enable for Unity Input System
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -413,7 +423,17 @@ public class OVRPlayerController : MonoBehaviour
         moveDirection += MoveThrottle * SimulationRate * Time.deltaTime;
 
         // Gravity
-        float currentModifier = (FallSpeed <= 0) ? (GravityModifier *  1.0f) : GravityModifier;
+        Rigidbody rb = GetComponent<Rigidbody>(); 
+        if (rb == null) rb = GetComponentInParent<Rigidbody>();
+
+        if (rb == null || rb.isKinematic)
+        {
+            currentModifier = 0;
+        }
+        else
+        {
+            currentModifier = (FallSpeed <= 0) ? (GravityModifier *  1.0f) : GravityModifier;
+        }
 
         if (Controller.isGrounded && FallSpeed <= 0)
             FallSpeed = ((Physics.gravity.y * (currentModifier * 0.002f)));

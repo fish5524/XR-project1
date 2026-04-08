@@ -10,10 +10,6 @@ public class AcornCollection : MonoBehaviour
         // 建議給你的 Camera 或 手把 或 CharacterController 加上 "Player" 標籤 (Tag)
         if (other.CompareTag("Player") || other.name.Contains("Controller"))
         {
-            if (ScoreManager.instance != null)
-            {
-                ScoreManager.instance.AddScore(1);
-            }
             DestroyAcorn();
         }
     }
@@ -22,5 +18,9 @@ public class AcornCollection : MonoBehaviour
     {
         Debug.Log("橡果被撞到了！消失！");
         Destroy(gameObject);
+        if (ScoreManager.instance != null)
+        {
+            ScoreManager.instance.AddScore(1);
+        }
     }
 }

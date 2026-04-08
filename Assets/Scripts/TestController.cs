@@ -27,16 +27,32 @@ public class TestController : MonoBehaviour
     private IEnumerator CountdownThenStartAnimation()
     {
         // 倒數計時 10 秒
-        for (int i = 1; i > 0; i--)
+        // for (int i = 1; i > 0; i--)
+        // {
+        //     Debug.Log($"倒數計時: {i} 秒");
+        //     yield return new WaitForSeconds(1f);
+        // }
+
+        // Debug.Log("開始動畫!");
+        // eggNestAnimationController.StartAnimation(() =>
+        // {
+        //     Debug.Log("EggNestAnimationController callback called.");
+        // });
+        for (int i = 3; i > 0; i--)
         {
-            Debug.Log($"倒數計時: {i} 秒");
+            Debug.Log($"動畫倒數: {i} 秒");
             yield return new WaitForSeconds(1f);
         }
 
-        Debug.Log("開始動畫!");
+        Debug.Log("發動動畫腳本!");
         eggNestAnimationController.StartAnimation(() =>
         {
-            Debug.Log("EggNestAnimationController callback called.");
+            Debug.Log("動畫播放完畢，通知 GameCore...");
+            
+            if (GameCoreV2.Instance != null)
+            {
+                GameCoreV2.Instance.NotifyStoryFinished();
+            }
         });
     }
 
