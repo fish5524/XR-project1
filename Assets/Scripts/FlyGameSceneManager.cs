@@ -72,7 +72,7 @@ public class FlyGameSceneManager : MonoBehaviour
         var globalCtrl = FindFirstObjectByType<GlobalSceneController>();
         if (globalCtrl != null)
         {
-            globalCtrl.SwitchToNextScene();
+            globalCtrl.SwitchToSceneByName("Forest3"); // 換到指定的場景
         }
         else
         {
