@@ -8,7 +8,7 @@ public class FlyGameSceneManager : MonoBehaviour
     [SerializeField] private bool enableHeightSwitch = true;   // 是否開啟高度偵測
 
     [Header("鳥模型位置微調")]
-    [SerializeField] private Vector3 birdLocalPos = new Vector3(0, -0.5f, 0.8f);
+    [SerializeField] private Vector3 birdLocalPos = new Vector3(0, -0.5f, 1.2f);
     [SerializeField] private Vector3 birdLocalRot = Vector3.zero;
 
     private birdController targetBird;
