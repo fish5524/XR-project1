@@ -6,6 +6,8 @@ public class EggNestAnimationController : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     [SerializeField] private ParrotBornAnimationController parrotBornAnimationController;
+    [SerializeField] private AudioClip waggleClip;
+    [SerializeField] private AudioClip eggCrackClip;
 
     private const int WAGGLE_COUNT = 5;
     private const float INITIAL_SPEED = 0.3f;
@@ -51,6 +53,7 @@ public class EggNestAnimationController : MonoBehaviour
             animator.speed = currentSpeed;
 
             // 直接播放 Waggle 狀態
+            PlayClip(waggleClip);
             animator.Play("Waggle", 0, 0f);
 
             // 等待 Waggle 動畫完成
@@ -61,6 +64,7 @@ public class EggNestAnimationController : MonoBehaviour
         animator.speed = 1f;
 
         // 直接播放 Hatch 狀態
+        PlayClip(eggCrackClip);
         animator.Play("Hatch", 0, 0f);
 
         // 同時呼叫 ParrotBornAnimationController 的 StartBorn
@@ -81,6 +85,16 @@ public class EggNestAnimationController : MonoBehaviour
         yield return WaitForAnimationComplete(0);
 
         onCompleted?.Invoke();
+    }
+
+    private void PlayClip(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return;
+        }
+
+        AudioSource.PlayClipAtPoint(clip, transform.position);
     }
 
     /// <summary>

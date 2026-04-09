@@ -1,9 +1,8 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.XR.Oculus;
-using System.Diagnostics;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 using Debug = UnityEngine.Debug;
 
@@ -11,67 +10,85 @@ public class GlobalSceneController : MonoBehaviour
 {
     public static GlobalSceneController instance;
 
-    [Header("核心引用")]
+    [Header("Scene References")]
     public GameObject ovrCameraRig;
     public GameObject playerBird;
 
-    [Header("過渡設定")]
-    public CanvasGroup fadeCanvasGroup; // 拖入剛剛建立的 Canvas Group
-    public float fadeDuration = 1.5f;   // 霧化持續時間
+    [Header("Fade")]
+    public CanvasGroup fadeCanvasGroup;
+    public float fadeDuration = 1.5f;
+
+    [Header("Background Audio")]
+    [SerializeField] private AudioClip scene1BgmClip;
+    [SerializeField] private AudioClip scene23BgmClip;
+    [SerializeField] private AudioClip forestAmbientClip;
+    [SerializeField, Range(0f, 1f)] private float mainBgmVolume = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float forestAmbientVolume = 0.12f;
+
+    [Header("Footsteps")]
+    [SerializeField] private AudioClip footstepClip;
 
     [System.Serializable]
     public struct SceneConfig
     {
-        public string sceneName;      // 場景名稱
-        public bool isBirdActive;     // 該場景鳥是否開啟
+        public string sceneName;
+        public bool isBirdActive;
         public bool useFloorLevel;
-        public Vector3 cameraPos;     // 相機位置
-        public Vector3 cameraRot;     // 相機旋轉
+        public Vector3 cameraPos;
+        public Vector3 cameraRot;
     }
 
-    [Header("場景排程 (依順序排列)")]
+    [Header("Scene Sequence")]
     public List<SceneConfig> sceneSequence = new List<SceneConfig>();
 
-    private int currentSequenceIndex = -1; // 目前在第幾個場景
+    private int currentSequenceIndex = -1;
     private bool isSwitching = false;
     private bool isFirst = true;
+    private AudioSource mainBgmSource;
+    private AudioSource ambientBgmSource;
 
     private void Awake()
     {
         if (instance == null)
         {
-            instance = this; 
-            DontDestroyOnLoad(gameObject); // 保護 SceneManager 自己
+            instance = this;
+            DontDestroyOnLoad(gameObject);
 
-            // 【關鍵：也要保護相機】
             if (ovrCameraRig != null)
             {
-                // 確保它是最頂層物件，否則 DontDestroyOnLoad 會無效
-                ovrCameraRig.transform.SetParent(null); 
-                DontDestroyOnLoad(ovrCameraRig); 
-                Debug.Log("相機已設定跨場景保留");
+                ovrCameraRig.transform.SetParent(null);
+                DontDestroyOnLoad(ovrCameraRig);
+                Debug.Log("OVR camera rig marked as DontDestroyOnLoad.");
             }
+
+            EnsureBackgroundAudioSources();
+            ApplyBackgroundAudioSettings();
+            EnsureFootstepAudio();
         }
-        else { Destroy(gameObject); }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
-    private void Start()
+    private void OnValidate()
     {
-        // if (sceneSequence.Count > 0)
-        // {
-        //     currentSequenceIndex = 0;
-        //     ApplyConfig(sceneSequence[currentSequenceIndex]);
-        // }
+        ApplyBackgroundAudioSettings();
     }
 
     public void StartGameSequence()
     {
-        Debug.Log("玩家點擊開始，啟動遊戲流程...");
+        Debug.Log("Starting scene sequence.");
         SwitchToNextScene();
     }
 
     public void SetJumpGameMode(bool active)
     {
+        if (ovrCameraRig == null)
+        {
+            return;
+        }
+
         var bird = ovrCameraRig.GetComponentInChildren<birdController>();
         if (bird != null)
         {
@@ -79,21 +96,22 @@ public class GlobalSceneController : MonoBehaviour
         }
     }
 
-    // --- 核心功能：自動換下一個場景 ---
     public void SwitchToNextScene()
     {
-        if(isSwitching)
+        if (isSwitching)
         {
-            Debug.LogWarning("正在切換場景中，請稍候...");
+            Debug.LogWarning("Scene switch already in progress.");
             return;
         }
+
         currentSequenceIndex++;
-        
+
         if (currentSequenceIndex < sceneSequence.Count)
         {
             SceneConfig nextConfig = sceneSequence[currentSequenceIndex];
-            Debug.Log($"準備切換到下一個場景: {nextConfig.sceneName}");
+            Debug.Log($"Loading next scene in sequence: {nextConfig.sceneName}");
             StartCoroutine(LoadSceneRoutine(nextConfig));
+
             if (nextConfig.sceneName == "Forest1")
             {
                 SetJumpGameMode(true);
@@ -105,11 +123,10 @@ public class GlobalSceneController : MonoBehaviour
         }
         else
         {
-            Debug.Log("所有場景流程已完成！");
+            Debug.Log("Scene sequence completed.");
         }
     }
 
-    // --- 核心功能：直接換特定名稱的場景 (保留彈性) ---
     public void SwitchToSceneByName(string name)
     {
         SceneConfig config = sceneSequence.Find(s => s.sceneName == name);
@@ -122,45 +139,48 @@ public class GlobalSceneController : MonoBehaviour
     private IEnumerator LoadSceneRoutine(SceneConfig config)
     {
         isSwitching = true;
-        // 1. 開始霧化 (淡入：Alpha 0 -> 1)
-        if(isFirst)
+
+        if (isFirst)
         {
-            fadeCanvasGroup.alpha = 0;
+            if (fadeCanvasGroup != null)
+            {
+                fadeCanvasGroup.alpha = 0f;
+            }
+
             isFirst = false;
         }
         else
         {
-            yield return StartCoroutine(Fade(1.0f));
+            yield return StartCoroutine(Fade(1f));
         }
-        
 
-        Debug.Log($"[Scene] 正在前往: {config.sceneName}");
-        
-        // 2. 異步載入場景
+        Debug.Log($"[Scene] Loading: {config.sceneName}");
+
         AsyncOperation op = SceneManager.LoadSceneAsync(config.sceneName);
-        while (!op.isDone) yield return null;
+        while (!op.isDone)
+        {
+            yield return null;
+        }
 
-        // 3. 載入完成，套用設定 (包含座標偏移、模式切換)
         ApplyConfig(config);
+        UpdateBackgroundAudio(config.sceneName);
 
-        // 4. 等待一小段時間確保場景物件都初始化完成 (可選)
         yield return new WaitForSeconds(0.5f);
 
-        // 5. 結束霧化 (淡出：Alpha 1 -> 0)
-        if(!isFirst)
-        {
-            yield return StartCoroutine(Fade(0.0f));
-        }
+        yield return StartCoroutine(Fade(0f));
 
         isSwitching = false;
     }
 
     private IEnumerator Fade(float targetAlpha)
     {
-        if (fadeCanvasGroup == null) yield break;
+        if (fadeCanvasGroup == null)
+        {
+            yield break;
+        }
 
         float startAlpha = fadeCanvasGroup.alpha;
-        float timer = 0;
+        float timer = 0f;
 
         while (timer < fadeDuration)
         {
@@ -168,83 +188,210 @@ public class GlobalSceneController : MonoBehaviour
             fadeCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / fadeDuration);
             yield return null;
         }
+
         fadeCanvasGroup.alpha = targetAlpha;
     }
 
     private void SetTrackingOrigin(bool useFloorLevel)
     {
-        if (useFloorLevel)
+        if (OVRManager.instance == null)
         {
-            // 設定為地面模式：相機高度會加上玩家的真實身高
-            OVRManager.instance.trackingOriginType = OVRManager.TrackingOrigin.FloorLevel;
+            return;
         }
-        else
-        {
-            // 設定為眼睛模式：相機位置就是你在 Scene 裡擺放的 Transform 座標
-            OVRManager.instance.trackingOriginType = OVRManager.TrackingOrigin.EyeLevel;
-        }
-        
-        // 強制重設視角姿勢以套用變更
+
+        OVRManager.instance.trackingOriginType = useFloorLevel
+            ? OVRManager.TrackingOrigin.FloorLevel
+            : OVRManager.TrackingOrigin.EyeLevel;
+
         OVRManager.display.RecenterPose();
-        Debug.Log($"[VR] 目前追蹤模式設定為: {(useFloorLevel ? "Floor Level" : "Eye Level")}");
+        Debug.Log($"[VR] Tracking origin set to {(useFloorLevel ? "Floor Level" : "Eye Level")}");
     }
 
     private void ApplyConfig(SceneConfig config)
     {
-        if (ovrCameraRig != null)
+        if (ovrCameraRig == null)
         {
-            ovrCameraRig.SetActive(true);
+            return;
+        }
 
-            // 1. 設定 VR 追蹤模式 (Eye Level vs Floor Level)
-            if (OVRManager.instance != null)
+        ovrCameraRig.SetActive(true);
+        SetTrackingOrigin(config.useFloorLevel);
+
+        Rigidbody rb = ovrCameraRig.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+        }
+
+        ovrCameraRig.transform.position = config.cameraPos;
+        ovrCameraRig.transform.eulerAngles = config.cameraRot;
+
+        Physics.SyncTransforms();
+
+        if (rb != null)
+        {
+            rb.useGravity = config.isBirdActive;
+            rb.isKinematic = !config.isBirdActive;
+
+            if (config.isBirdActive)
             {
-                OVRManager.instance.trackingOriginType = config.useFloorLevel ? 
-                    OVRManager.TrackingOrigin.FloorLevel : OVRManager.TrackingOrigin.EyeLevel;
-                
-                // 強制刷新視角 Pose
-                OVRManager.display.RecenterPose();
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
             }
+        }
 
-            // 2. 先處理物理 (防止位移時被彈開)
-            Rigidbody rb = ovrCameraRig.GetComponent<Rigidbody>();
-            if (rb != null)
+        var birdCtrl = ovrCameraRig.GetComponentInChildren<birdController>();
+        if (birdCtrl != null)
+        {
+            birdCtrl.enabled = config.isBirdActive;
+        }
+
+        if (playerBird != null)
+        {
+            playerBird.SetActive(config.isBirdActive);
+            if (config.sceneName == "Forest1")
             {
-                rb.isKinematic = true; 
+                playerBird.SetActive(false);
             }
+        }
 
-            // 3. 設定位置與旋轉
-            ovrCameraRig.transform.position = config.cameraPos;
-            ovrCameraRig.transform.eulerAngles = config.cameraRot;
+        Debug.Log($"[Scene] {config.sceneName} configured for {(config.useFloorLevel ? "Floor" : "Eye")} mode");
+    }
 
-            // 4. 強制物理同步
-            Physics.SyncTransforms();
+    private void EnsureBackgroundAudioSources()
+    {
+        AudioSource[] audioSources = GetComponents<AudioSource>();
 
-            // 5. 根據設定恢復物理與重力
-            if (rb != null)
+        if (audioSources.Length > 0)
+        {
+            mainBgmSource = audioSources[0];
+        }
+        else
+        {
+            mainBgmSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (audioSources.Length > 1)
+        {
+            ambientBgmSource = audioSources[1];
+        }
+        else
+        {
+            ambientBgmSource = gameObject.AddComponent<AudioSource>();
+        }
+    }
+
+    private void ApplyBackgroundAudioSettings()
+    {
+        if (mainBgmSource != null)
+        {
+            ConfigureLoopingAudioSource(mainBgmSource, mainBgmVolume);
+        }
+
+        if (ambientBgmSource != null)
+        {
+            ConfigureLoopingAudioSource(ambientBgmSource, forestAmbientVolume);
+        }
+    }
+
+    private void EnsureFootstepAudio()
+    {
+        if (footstepClip == null || ovrCameraRig == null)
+        {
+            return;
+        }
+
+        Camera centerEyeCamera = ovrCameraRig.GetComponentInChildren<Camera>(true);
+        if (centerEyeCamera == null)
+        {
+            return;
+        }
+
+        GameObject footstepObject = centerEyeCamera.gameObject;
+        AudioSource footstepSource = footstepObject.GetComponent<AudioSource>();
+        if (footstepSource == null)
+        {
+            footstepSource = footstepObject.AddComponent<AudioSource>();
+        }
+
+        CenterEyeDistanceFootsteps footsteps = footstepObject.GetComponent<CenterEyeDistanceFootsteps>();
+        if (footsteps == null)
+        {
+            footsteps = footstepObject.AddComponent<CenterEyeDistanceFootsteps>();
+        }
+
+        footsteps.Initialize(centerEyeCamera.transform, footstepSource, footstepClip);
+    }
+
+    private void ConfigureLoopingAudioSource(AudioSource source, float volume)
+    {
+        source.loop = true;
+        source.playOnAwake = false;
+        source.spatialBlend = 0f;
+        source.dopplerLevel = 0f;
+        source.volume = volume;
+    }
+
+    private void UpdateBackgroundAudio(string sceneName)
+    {
+        int sceneIndex = GetSceneSequenceIndex(sceneName);
+        AudioClip mainClip = null;
+
+        if (sceneIndex == 0)
+        {
+            mainClip = scene1BgmClip;
+        }
+        else if (sceneIndex == 1 || sceneIndex == 2)
+        {
+            mainClip = scene23BgmClip;
+        }
+
+        bool shouldPlayForestAmbient = sceneIndex >= 0 && sceneIndex <= 2;
+
+        PlayLoopingClip(mainBgmSource, mainClip);
+        PlayLoopingClip(ambientBgmSource, shouldPlayForestAmbient ? forestAmbientClip : null);
+    }
+
+    private int GetSceneSequenceIndex(string sceneName)
+    {
+        for (int i = 0; i < sceneSequence.Count; i++)
+        {
+            if (sceneSequence[i].sceneName == sceneName)
             {
-                rb.useGravity = config.isBirdActive;
-                rb.isKinematic = !config.isBirdActive;
-                
-                if (config.isBirdActive)
-                {
-                    rb.linearVelocity = Vector3.zero;
-                    rb.angularVelocity = Vector3.zero;
-                }
+                return i;
             }
+        }
 
-            // 6. 控制器與鳥的開關
-            var birdCtrl = ovrCameraRig.GetComponentInChildren<birdController>();
-            if (birdCtrl != null) {
-                birdCtrl.enabled = config.isBirdActive;
-                // birdCtrl.HaltUpdateMovement = !config.isBirdActive;
-            }
+        return -1;
+    }
 
-            if (playerBird != null)
+    private void PlayLoopingClip(AudioSource source, AudioClip clip)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        if (clip == null)
+        {
+            if (source.isPlaying)
             {
-                playerBird.SetActive(config.isBirdActive);
-                if (config.sceneName == "Forest1") playerBird.SetActive(false);
+                source.Stop();
             }
-            Debug.Log($"[Scene] {config.sceneName} 套用成功！模式: {(config.useFloorLevel ? "Floor" : "Eye")}");
+
+            source.clip = null;
+            return;
+        }
+
+        bool clipChanged = source.clip != clip;
+        if (clipChanged)
+        {
+            source.clip = clip;
+        }
+
+        if (clipChanged || !source.isPlaying)
+        {
+            source.Play();
         }
     }
 }
