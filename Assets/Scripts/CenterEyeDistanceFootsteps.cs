@@ -115,4 +115,18 @@ public class CenterEyeDistanceFootsteps : MonoBehaviour
         footstepSource.priority = 32;
         footstepSource.clip = footstepClip;
     }
+
+    public void Initialize(Transform tracked, AudioSource source, AudioClip clip)
+    {
+        trackedTransform = tracked;
+        footstepSource = source;
+        footstepClip = clip;
+
+        if (footstepSource != null)
+        {
+            ConfigureAudioSource();
+        }
+
+        ResetTracking();
+    }
 }

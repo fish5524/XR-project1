@@ -2615,6 +2615,12 @@ MonoBehaviour:
   playerBird: {fileID: 2092088892}
   fadeCanvasGroup: {fileID: 614894185}
   fadeDuration: 1.5
+  scene1BgmClip: {fileID: 8300000, guid: 5cc8046aae06e34408efeaf23c1c4e2a, type: 3}
+  scene23BgmClip: {fileID: 0}
+  forestAmbientClip: {fileID: 8300000, guid: e37dfad2c0bf46945b12078e033a85a9, type: 3}
+  mainBgmVolume: 0.35
+  forestAmbientVolume: 0.12
+  footstepClip: {fileID: 8300000, guid: a1d5225df2991814593bfc0fa0223a9e, type: 3}
   sceneSequence:
   - sceneName: HatchAnimation
     isBirdActive: 0
