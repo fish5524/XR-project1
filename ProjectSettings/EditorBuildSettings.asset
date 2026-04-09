@@ -14,12 +14,21 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Forest3.unity
     guid: 086c41094d0112e4d8e210cc20b69025
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Forest2.unity
     guid: 11e161f3780318c4e8e1ac5a065ca0f4
   - enabled: 1
     path: Assets/Scenes/global.unity
     guid: 75698a9600f759c4c88c2367d3975c96
+  - enabled: 1
+    path: Assets/Scenes/HatchAnimation.unity
+    guid: bde0eb10e6a485947a95214567f33cc0
+  - enabled: 1
+    path: Assets/Scenes/AfterEating.unity
+    guid: 96ea4447adac20548899c9269921ca37
+  - enabled: 1
+    path: Assets/Scenes/Fly.unity
+    guid: ce8b89adf56881c4694c448968bb78ef
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 86b3369029898d84692690c36a12709a, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
